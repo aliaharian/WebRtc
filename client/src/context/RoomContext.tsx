@@ -9,8 +9,15 @@ import {
 import { useNavigate } from "react-router-dom";
 import socketIO from "socket.io-client";
 import { v4 as uuidV4 } from "uuid";
-import { peersReducer } from "./peerReducer";
-import { addPeerAction, removePeerAction } from "./peerActions";
+import { peersReducer } from "../reducers/peerReducer";
+import { addPeerAction, removePeerAction } from "../reducers/peerActions";
+import { IMessage } from "../types/chat";
+import { chatReducer } from "../reducers/chatReducer";
+import {
+  addHistoryAction,
+  addMessageAction,
+  toogleChatAction,
+} from "../reducers/chatActions";
 
 const WS = "http://localhost:8080";
 
@@ -24,6 +31,10 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const [screenSharingId, setScreenSharingId] = useState<string>();
   const [roomId, setRoomId] = useState<string>();
   const [peers, dispatch] = useReducer(peersReducer, {});
+  const [chat, chatDispatch] = useReducer(chatReducer, {
+    messages: [],
+    isChatOpen: false,
+  });
   const enterRoom = ({ roomId }: { roomId: string }) => {
     console.log(`roomid is ${roomId}`);
     navigate(`room/${roomId}`);
@@ -67,6 +78,32 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const sendMessage = (message: string) => {
+    const messageData: IMessage = {
+      content: message,
+      author: me?.id,
+      timestamp: new Date().getTime(),
+    };
+    chatDispatch(addMessageAction(messageData));
+    ws.emit("send-message", { roomId, messageData });
+  };
+  const addMessage = ({ messageData }: { messageData: IMessage }) => {
+    console.log(messageData);
+    chatDispatch(addMessageAction(messageData));
+  };
+  const toggleChat = () => {
+    chatDispatch(toogleChatAction());
+  };
+  const addhistory = ({
+    roomId,
+    messages,
+  }: {
+    roomId: string;
+    messages: IMessage[];
+  }) => {
+    console.log(messages);
+    chatDispatch(addHistoryAction(messages || []));
+  };
   useEffect(() => {
     const meId = uuidV4();
     // const peer = new Peer(meId, {
@@ -91,6 +128,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     ws.on("user-stopped-sharing", () => {
       setScreenSharingId(undefined);
     });
+    ws.on("add-message", addMessage);
+    ws.on("get-messages", addhistory);
 
     return () => {
       ws.offAny();
@@ -136,10 +175,20 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [screenSharingId]);
 
-  console.log("peers", peers);
   return (
     <RoomContext.Provider
-      value={{ ws, me, stream, peers, shareScreen, screenSharingId, setRoomId }}
+      value={{
+        ws,
+        me,
+        stream,
+        peers,
+        shareScreen,
+        screenSharingId,
+        setRoomId,
+        sendMessage,
+        toggleChat,
+        chat,
+      }}
     >
       {children}
     </RoomContext.Provider>
