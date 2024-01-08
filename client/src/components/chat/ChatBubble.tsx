@@ -1,0 +1,28 @@
+import { useContext, useState } from "react";
+import { IMessage } from "../../types/chat";
+import { RoomContext } from "../../context/RoomContext";
+import classNames from "classnames";
+const ChatBubble: React.FC<{ message: IMessage }> = ({ message }) => {
+  const { me } = useContext(RoomContext);
+  const isSelf = message.author === me?.id;
+
+  return (
+    <div
+      className={classNames("m-2 flex", {
+        "pl-10 justify-end": isSelf,
+        "pr-10 justify-start": !isSelf,
+      })}
+    >
+      <div
+        className={ classNames("inline-block py-2 px-4 rounded", {
+          "bg-blue-200": isSelf,
+          "bg-blue-300": !isSelf,
+        })}
+      >
+        {message.content}
+      </div>
+    </div>
+  );
+};
+
+export default ChatBubble;
