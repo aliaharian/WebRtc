@@ -38,6 +38,14 @@ export function roomHandler(socket: Socket) {
   const leaveRoom = ({ peerId, roomId }: IRoomParams) => {
     rooms[roomId] = rooms[roomId]?.filter((id) => id !== peerId);
   };
+  const startSharing = ({ peerId, roomId }: IRoomParams) => {
+    socket.to(roomId).emit("user-started-sharing", { peerId });
+  };
+  const stopSharing = ({ roomId }: { roomId: string }) => {
+    socket.to(roomId).emit("user-stopped-sharing");
+  };
   socket.on("create-room", createRoom);
   socket.on("join-room", joinRoom);
+  socket.on("start-sharing", startSharing);
+  socket.on("stop-sharing", stopSharing);
 }
