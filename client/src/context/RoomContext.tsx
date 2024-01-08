@@ -22,6 +22,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const [me, setMe] = useState<Peer>();
   const [stream, setStream] = useState<MediaStream>();
   const [screenSharingId, setScreenSharingId] = useState<string>();
+  const [roomId, setRoomId] = useState<string>();
   const [peers, dispatch] = useReducer(peersReducer, {});
   const enterRoom = ({ roomId }: { roomId: string }) => {
     console.log(`roomid is ${roomId}`);
@@ -68,26 +69,44 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const meId = uuidV4();
-    const peer = new Peer(meId);
+    const peer = new Peer(meId, {
+      host: "peerjs.aliaharian.ir",
+      port: 443,
+      secure:true,
+      path: "/myapp",
+    });
     setMe(peer);
 
     ws.on("room-created", enterRoom);
     ws.on("get-users", getUsers);
     ws.on("user-disconnected", removePeer);
+    ws.on("user-started-sharing", ({ peerId }: { peerId: string }) =>
+      setScreenSharingId(peerId)
+    );
+    ws.on("user-stopped-sharing", () => {
+      setScreenSharingId(undefined);
+    });
+
+    return () => {
+      ws.offAny();
+    };
   }, []);
 
   useEffect(() => {
     if (!me) return;
     if (!stream) return;
     ws.on("user-joined", ({ peerId }: any) => {
-      console.log(`i am calling ${peerId}`);
-      const call = me.call(peerId, stream);
-      //i am calling peer
-      call.on("stream", (peerStream) => {
-        console.log(`${peerId} answered!`);
-        dispatch(addPeerAction(peerId, peerStream));
-      });
+      setTimeout(() => {
+        console.log(`i am calling ${peerId}`);
+        const call = me.call(peerId, stream);
+        //i am calling peer
+        call.on("stream", (peerStream) => {
+          console.log(`${peerId} answered!`);
+          dispatch(addPeerAction(peerId, peerStream));
+        });
+      }, 1000);
     });
+    console.log("here is ok !", me);
     me.on("call", (call) => {
       console.log(`someone is calling!`);
       console.log(`i am going to answer!`);
@@ -104,9 +123,19 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [me, stream]);
 
+  useEffect(() => {
+    if (screenSharingId) {
+      ws.emit("start-sharing", { peerId: screenSharingId, roomId });
+    } else {
+      ws.emit("stop-sharing", { roomId });
+    }
+  }, [screenSharingId]);
+
   console.log("peers", peers);
   return (
-    <RoomContext.Provider value={{ ws, me, stream, peers, shareScreen }}>
+    <RoomContext.Provider
+      value={{ ws, me, stream, peers, shareScreen, screenSharingId, setRoomId }}
+    >
       {children}
     </RoomContext.Provider>
   );
