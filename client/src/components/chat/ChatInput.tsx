@@ -2,22 +2,32 @@ import { useContext, useState } from "react";
 import { RoomContext } from "../../context/RoomContext";
 
 const ChatInput = () => {
-  const [message, setMessage] = useState<string>(" ");
+  const [message, setMessage] = useState<string>("");
   const { sendMessage } = useContext(RoomContext);
+  const handleSendMessageWithEnter = (e: any) => {
+    if (e.key === "Enter" && message.trim() !== "") {
+      e.preventDefault();
+      sendMessage(message.trim());
+      setMessage("");
+    }
+  };
   return (
     <div className="flex">
       <form
         className="flex gap-x-1"
         onSubmit={(e) => {
           e.preventDefault();
-          sendMessage(message);
-          setMessage("");
+          if (message.trim() !== "") {
+            sendMessage(message.trim());
+            setMessage("");
+          }
         }}
       >
         <textarea
           value={message}
           className="border border-gray-300"
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDownCapture={handleSendMessageWithEnter}
         />
         <button
           className="border border-gray-300 bg-blue-200 rounded-lg py-2 px-4 hover:bg-blue-500 hover:text-white transition-all"
