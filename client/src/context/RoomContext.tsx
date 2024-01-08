@@ -69,11 +69,16 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const meId = uuidV4();
+    // const peer = new Peer(meId, {
+    //   host: "peerjs.aliaharian.ir",
+    //   port: 443,
+    //   secure:true,
+    //   path: "/myapp",
+    // });
     const peer = new Peer(meId, {
-      host: "peerjs.aliaharian.ir",
-      port: 443,
-      secure:true,
-      path: "/myapp",
+      host: "localhost",
+      port: 9500,
+      path: "/",
     });
     setMe(peer);
 
