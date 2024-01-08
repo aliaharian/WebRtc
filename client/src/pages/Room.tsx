@@ -19,15 +19,17 @@ const Room = () => {
     setRoomId,
     chat,
     toggleChat,
+    username,
+    setUsername,
   } = useContext(RoomContext);
 
   useEffect(() => {
-    if (me) {
+    if (me && stream) {
       console.log(`i am ${me.id}`);
-      ws.emit("join-room", { roomId: id, peerId: me.id });
+      ws.emit("join-room", { roomId: id, peerId: me.id, username });
       setRoomId(id);
     }
-  }, [id, me, ws]);
+  }, [id, me, ws, stream]);
   const screenSharingVideo =
     screenSharingId === me?.id ? stream : peers[screenSharingId]?.stream;
   const { [screenSharingId]: sharedVideo, ...peersToShow } = peers;
@@ -49,17 +51,23 @@ const Room = () => {
           {screenSharingId !== me?.id && (
             <div className="h-max border border-blue-400">
               <VideoPlayer stream={stream} />
-              <p>me!</p>
+
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
             </div>
           )}
-          {Object.keys(peersToShow as peerState).map((peer, index) => {
-            return (
-              <div key={index} className="h-max border border-blue-400">
-                <VideoPlayer stream={peers[peer].stream} />
-                <p>peerId: {peer}</p>
-              </div>
-            );
-          })}
+          {Object.values(peersToShow as peerState)
+            .filter((peer) => !!peer.stream)
+            .map((peer, index) => {
+              return (
+                <div key={index} className="h-max border border-blue-400">
+                  <VideoPlayer stream={peer.stream} />
+                  <p>Peer Name: {peer.username}</p>
+                </div>
+              );
+            })}
         </div>
         {chat.isChatOpen && (
           <div className="border-l border-gray-300 max-h-[calc(100vh-56px)]">

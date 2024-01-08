@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { RoomContext } from "../context/RoomContext";
-import NameInput from "../common/Name";
+import NameInput from "../common/NameInput";
 
 const CreateButton = () => {
   const { ws } = useContext(RoomContext);
@@ -8,7 +8,7 @@ const CreateButton = () => {
     ws.emit("create-room");
   };
   return (
-    <>
+    <div className="flex flex-col">
       <NameInput />
       <button
         onClick={joinRoom}
@@ -16,7 +16,7 @@ const CreateButton = () => {
       >
         Start new meeting
       </button>
-    </>
+    </div>
   );
 };
 
