@@ -3,10 +3,11 @@ import { useParams } from "react-router-dom";
 import { RoomContext } from "../context/RoomContext";
 import VideoPlayer from "../components/VideoPlayer";
 import { peerState } from "../context/peerReducer";
+import ShareScreenButton from "../components/ShareScreenButton";
 
 const Room = () => {
   const { id } = useParams();
-  const { ws, me, stream, peers } = useContext(RoomContext);
+  const { ws, me, stream, peers, shareScreen } = useContext(RoomContext);
 
   useEffect(() => {
     me && ws.emit("join-room", { roomId: id, peerId: me._id });
@@ -27,6 +28,9 @@ const Room = () => {
             </div>
           );
         })}
+      </div>
+      <div className="fixed w-full bottom-0 bg-gray-200 px-2 py-1 flex items-center justify-center border-t border-gray-400">
+        <ShareScreenButton onClick={shareScreen} />
       </div>
     </div>
   );
